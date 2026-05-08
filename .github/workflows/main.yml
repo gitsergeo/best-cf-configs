@@ -23,6 +23,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Синхронизировать с удалённым репозиторием
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git pull origin main --rebase || git pull origin main --no-rebase || true
+
       - name: Установить Python
         uses: actions/setup-python@v5
         with:
