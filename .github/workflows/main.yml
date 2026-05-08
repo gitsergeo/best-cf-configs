@@ -41,7 +41,7 @@ jobs:
             --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt" \
             --mode quick \
             --skip-download \
-            --top 20 \
+            --top 0 \
             --no-tui \
             --output-configs temp1.txt
       - name: Сканировать подписку 2 (Mobile)
@@ -50,13 +50,12 @@ jobs:
             --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt" \
             --mode quick \
             --skip-download \
-            --top 20 \
+            --top 0 \
             --no-tui \
             --output-configs temp2.txt
-      - name: Объединить и отобрать топ-40
+      - name: Объединить и отобрать все рабочие
         run: |
-          cat temp1.txt temp2.txt | awk 'NF && !seen[$0]++' > all_configs.txt
-          head -n 40 all_configs.txt > best_configs.txt
+          cat temp1.txt temp2.txt | awk 'NF && !seen[$0]++' > best_configs.txt
       - name: Commit & Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,13 +68,13 @@ jobs:
           git status
           git log --oneline -3
           # Добавляем файлы
-          git add best_configs.txt all_configs.txt
+          git add best_configs.txt
           # Проверяем, есть ли изменения для коммита
           if git diff --cached --quiet; then
             echo "Нет изменений для коммита"
             exit 0
           fi
-          git commit -m "Автообновление: топ-20 конфигов по пингу"
+          git commit -m "Автообновление: все рабочие конфиги"
           # Получаем свежие изменения перед пушем (нужно, если кто-то запушил пока мы работали)
           echo "=== Получаем последние изменения ==="
           git pull origin main --rebase || {
