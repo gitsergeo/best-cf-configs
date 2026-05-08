@@ -53,9 +53,18 @@ jobs:
             --top 0 \
             --no-tui \
             --output-configs temp2.txt
+      - name: Сканировать подписку 3 (Black VLESS RUS mobile)
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/BLACK_VLESS_RUS_mobile.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp3.txt
       - name: Объединить и отобрать все рабочие
         run: |
-          cat temp1.txt temp2.txt | awk 'NF && !seen[$0]++' > best_configs.txt
+          cat temp1.txt temp2.txt temp3.txt | awk 'NF && !seen[$0]++' > best_configs.txt
       - name: Commit & Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
