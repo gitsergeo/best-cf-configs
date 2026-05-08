@@ -1,0 +1,5 @@
+temp*.txt
+results/
+*.png
+__pycache__/
+*.pyc
