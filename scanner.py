@@ -8303,18 +8303,6 @@ async def run_scan(st: State, workers: int, speed_workers: int, timeout: float, 
 
     preset = PRESETS.get(st.mode, PRESETS["normal"])
 
-    alive_keys = sorted(
-        (key for key, r in st.res.items() if r.alive),
-        key=lambda key: st.res[key].tls_ms,
-    )
-
-    cut_pct = preset.get("latency_cut", 0)
-    if cut_pct > 0 and len(alive_keys) > 50:
-        cut_n = max(1, int(len(alive_keys) * cut_pct / 100))
-        alive_keys = alive_keys[:-cut_n]
-        st.latency_cut_n = cut_n
-        _dbg(f"=== Latency cut: removed bottom {cut_pct}% = {cut_n} keys, {len(alive_keys)} remaining ===")
-
     # Speed rounds use unique IPs (without port) for Cloudflare edge download test
     alive_ips = sorted(
         set(r.ip for r in st.res.values() if r.alive),
@@ -8323,6 +8311,13 @@ async def run_scan(st: State, workers: int, speed_workers: int, timeout: float, 
             default=9999,
         ),
     )
+
+    cut_pct = preset.get("latency_cut", 0)
+    if cut_pct > 0 and len(alive_ips) > 50:
+        cut_n = max(1, int(len(alive_ips) * cut_pct / 100))
+        alive_ips = alive_ips[:-cut_n]
+        st.latency_cut_n = cut_n
+        _dbg(f"=== Latency cut: removed bottom {cut_pct}% = {cut_n} IPs, {len(alive_ips)} remaining ===")
 
     if not st.rounds:
         st.rounds = build_dynamic_rounds(st.mode, len(alive_ips))
