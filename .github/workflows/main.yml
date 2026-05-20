@@ -271,7 +271,11 @@ jobs:
             --output-configs temp26.txt
       - name: Объединить и отобрать все рабочие
         run: |
-          cat temp1.txt temp2.txt temp3.txt temp4.txt temp5.txt temp6.txt temp7.txt temp8.txt temp9.txt temp10.txt temp11.txt temp12.txt temp13.txt temp14.txt temp15.txt temp16.txt temp17.txt temp18.txt temp19.txt temp20.txt temp21.txt temp22.txt temp23.txt temp24.txt temp25.txt temp26.txt | awk 'NF && !seen[$0]++' > best_configs.txt
+          for f in temp{1..26}.txt; do
+            if [ -f "$f" ] && [ "$(wc -l < "$f")" -le 800 ]; then
+              cat "$f"
+            fi
+          done | awk 'NF && !seen[$0]++' > best_configs.txt
       - name: Commit & Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
