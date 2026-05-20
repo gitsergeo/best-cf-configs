@@ -35,57 +35,243 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Сканировать подписку 1 (Mobile-2)
+      - name: Сканировать подписку 1
         run: |
           python3 scanner.py \
-            --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt" \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/1.txt" \
             --mode quick \
             --skip-download \
             --top 0 \
             --no-tui \
             --output-configs temp1.txt
-      - name: Сканировать подписку 2 (Mobile)
+      - name: Сканировать подписку 2
         run: |
           python3 scanner.py \
-            --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt" \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/2.txt" \
             --mode quick \
             --skip-download \
             --top 0 \
             --no-tui \
             --output-configs temp2.txt
-      - name: Сканировать подписку 3 (Black VLESS RUS mobile)
+      - name: Сканировать подписку 3
         run: |
           python3 scanner.py \
-            --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/BLACK_VLESS_RUS_mobile.txt" \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/3.txt" \
             --mode quick \
             --skip-download \
             --top 0 \
             --no-tui \
             --output-configs temp3.txt
-      - name: Сканировать подписку 4 (Black SS+All RUS)
-
-        run: |
-              python3 scanner.py \
-                --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/9.txt" \
-                --mode quick \
-                --skip-download \
-                --top 0 \
-                --no-tui \
-                --output-configs temp4.txt
-      - name: Сканировать подписку 9
-
-      
+      - name: Сканировать подписку 4
         run: |
           python3 scanner.py \
-            --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/BLACK_SS%2BAll_RUS.txt" \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/4.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp4.txt
+      - name: Сканировать подписку 5
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/5.txt" \
             --mode quick \
             --skip-download \
             --top 0 \
             --no-tui \
             --output-configs temp5.txt
+      - name: Сканировать подписку 6
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/6.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp6.txt
+      - name: Сканировать подписку 7
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/7.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp7.txt
+      - name: Сканировать подписку 8
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/8.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp8.txt
+      - name: Сканировать подписку 9
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/9.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp9.txt
+      - name: Сканировать подписку 10
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/10.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp10.txt
+      - name: Сканировать подписку 11
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/11.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp11.txt
+      - name: Сканировать подписку 12
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/12.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp12.txt
+      - name: Сканировать подписку 13
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/13.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp13.txt
+      - name: Сканировать подписку 14
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/14.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp14.txt
+      - name: Сканировать подписку 15
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/15.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp15.txt
+      - name: Сканировать подписку 16
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/16.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp16.txt
+      - name: Сканировать подписку 17
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/17.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp17.txt
+      - name: Сканировать подписку 18
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/18.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp18.txt
+      - name: Сканировать подписку 19
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/19.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp19.txt
+      - name: Сканировать подписку 20
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/20.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp20.txt
+      - name: Сканировать подписку 21
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/21.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp21.txt
+      - name: Сканировать подписку 22
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/22.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp22.txt
+      - name: Сканировать подписку 23
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/23.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp23.txt
+      - name: Сканировать подписку 24
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/24.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp24.txt
+      - name: Сканировать подписку 25
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/25.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp25.txt
+      - name: Сканировать подписку 26
+        run: |
+          python3 scanner.py \
+            --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/26.txt" \
+            --mode quick \
+            --skip-download \
+            --top 0 \
+            --no-tui \
+            --output-configs temp26.txt
       - name: Объединить и отобрать все рабочие
         run: |
-          cat temp1.txt temp2.txt temp3.txt temp4.txt temp5.txt | awk 'NF && !seen[$0]++' > best_configs.txt
+          cat temp1.txt temp2.txt temp3.txt temp4.txt temp5.txt temp6.txt temp7.txt temp8.txt temp9.txt temp10.txt temp11.txt temp12.txt temp13.txt temp14.txt temp15.txt temp16.txt temp17.txt temp18.txt temp19.txt temp20.txt temp21.txt temp22.txt temp23.txt temp24.txt temp25.txt temp26.txt | awk 'NF && !seen[$0]++' > best_configs.txt
       - name: Commit & Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
