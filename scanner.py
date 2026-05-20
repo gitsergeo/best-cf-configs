@@ -587,6 +587,7 @@ class ConfigEntry:
     name: str = ""
     original_uri: str = ""
     ip: str = ""
+    port: int = 443
 
 
 @dataclass
@@ -604,6 +605,7 @@ class RoundCfg:
 @dataclass
 class Result:
     ip: str
+    port: int = 443
     domains: List[str] = field(default_factory=list)
     uris: List[str] = field(default_factory=list)
     tcp_ms: float = -1
@@ -890,13 +892,23 @@ def parse_vless(uri: str) -> Optional[ConfigEntry]:
     if "@" not in rest:
         return None
     _, addr = rest.split("@", 1)
+    port = 443
     if addr.startswith("["):
         if "]" not in addr:
             return None
         address = addr[1 : addr.index("]")]
+        after = addr[addr.index("]") + 1:]
+        if after.startswith(":"):
+            try:
+                port = int(after[1:])
+            except (ValueError, TypeError):
+                pass
     else:
-        address = addr.rsplit(":", 1)[0]
-    return ConfigEntry(address=address, name=name, original_uri=uri.strip())
+        parts = addr.rsplit(":", 1)
+        address = parts[0]
+        if len(parts) > 1 and parts[1].isdigit():
+            port = int(parts[1])
+    return ConfigEntry(address=address, name=name, original_uri=uri.strip(), port=port)
 
 
 def parse_vmess(uri: str) -> Optional[ConfigEntry]:
@@ -921,7 +933,12 @@ def parse_vmess(uri: str) -> Optional[ConfigEntry]:
     if not address:
         return None
     name = str(obj.get("ps", ""))
-    return ConfigEntry(address=address, name=name, original_uri=uri.strip())
+    port = 443
+    try:
+        port = int(obj.get("port", 443))
+    except (ValueError, TypeError):
+        pass
+    return ConfigEntry(address=address, name=name, original_uri=uri.strip(), port=port)
 
 
 def parse_config(uri: str) -> Optional[ConfigEntry]:
@@ -3480,7 +3497,7 @@ async def _resolve(e: ConfigEntry, sem: asyncio.Semaphore, counter: List[int]) -
     async with sem:
         try:
             loop = asyncio.get_running_loop()
-            info = await loop.getaddrinfo(e.address, 443, family=socket.AF_INET)
+            info = await loop.getaddrinfo(e.address, e.port, family=socket.AF_INET)
             if info:
                 e.ip = info[0][4][0]
         except Exception:
@@ -3518,23 +3535,27 @@ async def resolve_all(st: State, workers: int = 100):
             pass
     for c in st.configs:
         if c.ip:
-            st.ip_map[c.ip].append(c)
+            key = f"{c.ip}:{c.port}"
+            st.ip_map[key].append(c)
     st.ips = list(st.ip_map.keys())
-    for ip in st.ips:
-        cs = st.ip_map[ip]
-        st.res[ip] = Result(
-            ip=ip,
+    for key in st.ips:
+        cs = st.ip_map[key]
+        ip_part = key.split(":")[0]
+        port_part = int(key.split(":")[1])
+        st.res[key] = Result(
+            ip=ip_part,
+            port=port_part,
             domains=[c.address for c in cs],
             uris=[c.original_uri for c in cs if c.original_uri],
         )
 
 
-async def _lat_one(ip: str, sni: str, timeout: float) -> Tuple[float, float, str]:
+async def _lat_one(ip: str, sni: str, timeout: float, port: int = 443) -> Tuple[float, float, str]:
     """Measure TCP RTT and full TLS connection time (TCP+TLS handshake)."""
     try:
         t0 = time.monotonic()
         r, w = await asyncio.wait_for(
-            asyncio.open_connection(ip, 443), timeout=timeout
+            asyncio.open_connection(ip, port), timeout=timeout
         )
         tcp = (time.monotonic() - t0) * 1000
         w.close()
@@ -3552,7 +3573,7 @@ async def _lat_one(ip: str, sni: str, timeout: float) -> Tuple[float, float, str
         ctx.verify_mode = ssl.CERT_NONE
         t0 = time.monotonic()
         r, w = await asyncio.wait_for(
-            asyncio.open_connection(ip, 443, ssl=ctx, server_hostname=sni),
+            asyncio.open_connection(ip, port, ssl=ctx, server_hostname=sni),
             timeout=timeout,
         )
         tls_full = (time.monotonic() - t0) * 1000  # full TCP+TLS time
@@ -3575,14 +3596,24 @@ async def phase1(st: State, workers: int, timeout: float):
     st.done_count = 0
     sem = asyncio.Semaphore(workers)
 
-    async def go(ip: str):
+    async def go(key: str):
         async with sem:
             if st.interrupted:
                 return
-            res = st.res[ip]
-            # Use speed.cloudflare.com as SNI — filters out non-CF IPs early
-            # (non-CF IPs will fail TLS since they don't serve this cert)
-            tcp, tls, err = await _lat_one(ip, SPEED_HOST, timeout)
+            res = st.res[key]
+            ip = res.ip
+            port = res.port
+            # Use speed.cloudflare.com as SNI by default
+            sni = SPEED_HOST
+            # If the config has a domain address, try to use it as SNI
+            for c in st.ip_map.get(key, []):
+                try:
+                    ipaddress.ip_address(c.address)
+                except (ValueError, TypeError):
+                    # address is a domain — use it as SNI instead
+                    sni = c.address
+                    break
+            tcp, tls, err = await _lat_one(ip, sni, timeout, port=port)
             res.tcp_ms = tcp
             res.tls_ms = tls
             res.error = err
@@ -3593,7 +3624,7 @@ async def phase1(st: State, workers: int, timeout: float):
             else:
                 st.dead_n += 1
 
-    tasks = [asyncio.ensure_future(go(ip)) for ip in st.ips]
+    tasks = [asyncio.ensure_future(go(key)) for key in st.ips]
     try:
         await asyncio.gather(*tasks, return_exceptions=True)
     except asyncio.CancelledError:
@@ -3806,6 +3837,8 @@ async def phase2_round(
         best_colo = ""
         last_err = ""
         force_cdn = False  # set True when CF rejects (403/429)
+        # Find all result keys for this IP
+        res_keys = [k for k in st.res if st.res[k].ip == ip]
 
         for attempt in range(max_retries):
             if st.interrupted:
@@ -3860,19 +3893,20 @@ async def phase2_round(
                 _dbg(f"DL {ip}: {err} from {use_host}, will retry")
             last_err = err
 
-        res = st.res[ip]
-        res.speeds.append(best_mbps_this)
-        if best_mbps_this > 0:
-            if best_mbps_this > res.best_mbps:
-                res.best_mbps = best_mbps_this
-            if best_ttfb > 0 and (res.ttfb_ms < 0 or best_ttfb < res.ttfb_ms):
-                res.ttfb_ms = best_ttfb
-            if best_colo and not res.colo:
-                res.colo = best_colo
-            if best_mbps_this > st.best_speed:
-                st.best_speed = best_mbps_this
-        elif last_err:
-            res.error = last_err
+        for rk in res_keys:
+            res = st.res[rk]
+            res.speeds.append(best_mbps_this)
+            if best_mbps_this > 0:
+                if best_mbps_this > res.best_mbps:
+                    res.best_mbps = best_mbps_this
+                if best_ttfb > 0 and (res.ttfb_ms < 0 or best_ttfb < res.ttfb_ms):
+                    res.ttfb_ms = best_ttfb
+                if best_colo and not res.colo:
+                    res.colo = best_colo
+                if best_mbps_this > st.best_speed:
+                    st.best_speed = best_mbps_this
+            elif last_err:
+                res.error = last_err
         st.done_count += 1
 
     tasks = [asyncio.ensure_future(go(ip)) for ip in candidates]
@@ -8269,25 +8303,34 @@ async def run_scan(st: State, workers: int, speed_workers: int, timeout: float, 
 
     preset = PRESETS.get(st.mode, PRESETS["normal"])
 
-    alive = sorted(
-        (ip for ip, r in st.res.items() if r.alive),
-        key=lambda ip: st.res[ip].tls_ms,
+    alive_keys = sorted(
+        (key for key, r in st.res.items() if r.alive),
+        key=lambda key: st.res[key].tls_ms,
     )
 
     cut_pct = preset.get("latency_cut", 0)
-    if cut_pct > 0 and len(alive) > 50:
-        cut_n = max(1, int(len(alive) * cut_pct / 100))
-        alive = alive[:-cut_n]
+    if cut_pct > 0 and len(alive_keys) > 50:
+        cut_n = max(1, int(len(alive_keys) * cut_pct / 100))
+        alive_keys = alive_keys[:-cut_n]
         st.latency_cut_n = cut_n
-        _dbg(f"=== Latency cut: removed bottom {cut_pct}% = {cut_n} IPs, {len(alive)} remaining ===")
+        _dbg(f"=== Latency cut: removed bottom {cut_pct}% = {cut_n} keys, {len(alive_keys)} remaining ===")
+
+    # Speed rounds use unique IPs (without port) for Cloudflare edge download test
+    alive_ips = sorted(
+        set(r.ip for r in st.res.values() if r.alive),
+        key=lambda ip: min(
+            (st.res[k].tls_ms for k in st.res if st.res[k].ip == ip and st.res[k].alive),
+            default=9999,
+        ),
+    )
 
     if not st.rounds:
-        st.rounds = build_dynamic_rounds(st.mode, len(alive))
+        st.rounds = build_dynamic_rounds(st.mode, len(alive_ips))
         _dbg(f"=== Dynamic rounds: {[(r.label, r.keep) for r in st.rounds]} ===")
 
     if not st.interrupted and st.rounds:
         rlim = CFRateLimiter()
-        cands = list(alive)
+        cands = list(alive_ips)
         cdn_host = SPEED_HOST
         cdn_path = ""  # _dl_one uses default
 
@@ -8302,7 +8345,10 @@ async def run_scan(st: State, workers: int, speed_workers: int, timeout: float, 
 
             if i > 0:
                 calc_scores(st)
-                cands = sorted(cands, key=lambda ip: st.res[ip].score, reverse=True)
+                cands = sorted(cands, key=lambda ip: max(
+                    (st.res[k].score for k in st.res if st.res[k].ip == ip and st.res[k].alive),
+                    default=0,
+                ), reverse=True)
             cands = cands[: rc.keep]
 
             await phase2_round(
@@ -8618,7 +8664,7 @@ async def run_headless(args):
 
     print("Resolving DNS...")
     await resolve_all(st)
-    print(f"  {len(st.ips)} unique IPs")
+    print(f"  {len(st.ips)} unique IP:port pairs")
     if not st.ips:
         return
 
@@ -8779,7 +8825,7 @@ async def run_headless_clean(args):
             print(f"Generated {len(configs)} configs")
             print("Resolving DNS...")
             await resolve_all(st)
-            print(f"  {len(st.ips)} unique IPs")
+            print(f"  {len(st.ips)} unique IP:port pairs")
             if st.ips:
                 start2 = time.monotonic()
                 scan2 = asyncio.ensure_future(
