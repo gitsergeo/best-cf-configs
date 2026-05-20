@@ -8295,6 +8295,12 @@ async def run_scan(st: State, workers: int, speed_workers: int, timeout: float, 
 
     if not st.interrupted:
         await phase1(st, workers, timeout)
+        for r in st.res.values():
+            if r.alive and r.tls_ms > 800:
+                r.alive = False
+                r.error = "high-latency"
+                st.dead_n += 1
+                st.alive_n -= 1
 
     if st.interrupted or st.alive_n == 0:
         st.finished = True
