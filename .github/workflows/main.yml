@@ -63,6 +63,18 @@ jobs:
             --no-tui \
             --output-configs temp3.txt
       - name: Сканировать подписку 4 (Black SS+All RUS)
+
+        run: |
+              python3 scanner.py \
+                --sub "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/9.txt" \
+                --mode quick \
+                --skip-download \
+                --top 0 \
+                --no-tui \
+                --output-configs temp4.txt
+      - name: Сканировать подписку 9
+
+      
         run: |
           python3 scanner.py \
             --sub "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/BLACK_SS%2BAll_RUS.txt" \
@@ -70,10 +82,10 @@ jobs:
             --skip-download \
             --top 0 \
             --no-tui \
-            --output-configs temp4.txt
+            --output-configs temp5.txt
       - name: Объединить и отобрать все рабочие
         run: |
-          cat temp1.txt temp2.txt temp3.txt temp4.txt | awk 'NF && !seen[$0]++' > best_configs.txt
+          cat temp1.txt temp2.txt temp3.txt temp4.txt temp5.txt | awk 'NF && !seen[$0]++' > best_configs.txt
       - name: Commit & Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
