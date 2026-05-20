@@ -8352,8 +8352,63 @@ async def run_scan(st: State, workers: int, speed_workers: int, timeout: float, 
             )
             calc_scores(st)
 
+    if not st.interrupted:
+        await phase_validate(st)
+
     st.finished = True
     calc_scores(st)
+
+
+async def phase_validate(st: State):
+    """Validate alive configs by testing actual proxy protocol.
+    For VLESS+WS configs: uses native Python test (no xray needed).
+    For Reality/TCP: skipped (requires xray-core).
+    Removes failed URIs from results; marks result dead if all URIs fail.
+    """
+    if st.interrupted:
+        return
+    for r in list(st.res.values()):
+        if not r.alive or not r.uris:
+            continue
+        working_uris = []
+        for uri in r.uris:
+            parsed = parse_vless_full(uri)
+            if not parsed:
+                working_uris.append(uri)
+                continue
+            # Only validate VLESS+WS configs natively
+            # (VMess needs a different frame format, Reality needs xray-core)
+            net = parsed.get("type") or "tcp"
+            if net not in ("ws", "websocket"):
+                working_uris.append(uri)
+                continue
+            sec = parsed.get("security") or "none"
+            if sec not in ("tls", "none", ""):
+                working_uris.append(uri)
+                continue
+            try:
+                connect_ms, ttfb_ms, mbps, err = await _vless_ws_speed_test(
+                    ip=r.ip, port=r.port,
+                    sni=parsed.get("sni") or parsed.get("host") or parsed.get("address", ""),
+                    host=parsed.get("host") or parsed.get("sni") or parsed.get("address", ""),
+                    ws_path=parsed.get("path", "/"),
+                    uuid_str=parsed.get("uuid", ""),
+                    size=XRAY_QUICK_SIZE, timeout=XRAY_QUICK_TIMEOUT,
+                    security=sec,
+                )
+                if mbps > 0:
+                    working_uris.append(uri)
+                else:
+                    _dbg(f"VALIDATE: {r.ip}:{r.port} WS failed: {err}")
+            except Exception as e:
+                _dbg(f"VALIDATE: {r.ip}:{r.port} WS error: {e}")
+        if working_uris:
+            r.uris = working_uris
+        else:
+            r.alive = False
+            r.error = "proxy-validation-failed"
+            st.alive_n -= 1
+            st.dead_n += 1
 
 
 async def run_tui(args, deploy_mode=False):
