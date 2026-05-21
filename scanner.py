@@ -8963,6 +8963,8 @@ Examples:
     p.add_argument("--clean-mode", choices=["quick", "normal", "full", "mega"], default="normal",
                    help="Clean IP scan scope (quick=~4K, normal=~12K, full=~1.5M, mega=~3M multi-port)")
     p.add_argument("--subnets", help="Custom subnets file or comma-separated CIDRs")
+    p.add_argument("--ping-url", metavar="HOST",
+                   help="Custom speed test host (default: speed.cloudflare.com)")
     # Xray Proxy Testing
     p.add_argument("--xray", metavar="URI",
                    help="VLESS/VMess URI to test through Xray-core proxy")
@@ -8989,6 +8991,9 @@ Examples:
     p.add_argument("--uninstall", action="store_true",
                    help="Remove everything cfray installed")
     args = p.parse_args()
+
+    if args.ping_url:
+        globals()['SPEED_HOST'] = args.ping_url
 
     args._mode_set = any(a == "-m" or a.startswith("--mode") for a in sys.argv)
 

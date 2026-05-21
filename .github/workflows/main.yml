@@ -48,6 +48,7 @@ jobs:
                 --skip-download \
                 --top 0 \
                 --no-tui \
+                --ping-url ya.ru \
                 --output-configs "temp${i}.txt"
             else
               echo "  > 800, пропускаем"
